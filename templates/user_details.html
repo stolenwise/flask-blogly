@@ -7,4 +7,5 @@
       <a href="/users/{{ user.id }}/edit">Edit</a>
       <button type="submit">Delete</button>
   </form>
+  <a href="{{ url_for('list_users') }}" class="btn btn-primary">Back to Users</a>
 {% endblock %}
