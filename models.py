@@ -20,7 +20,7 @@ class Users(db.Model):
 
     last_name = db.Column(db.String(50),
                      nullable=False)
-    image_url = db.Column(db.String, nullable = True)
+    image_url = db.Column(db.String, nullable=False)
 
     def __repr__(self):
         return f"<User {self.id}: {self.first_name} {self.last_name}>"

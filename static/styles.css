@@ -1,0 +1,37 @@
+.btn.btn-success {
+    color: white;  /* Text color */
+    background-color: green;  /* Background color */
+    border: none;  /* Removes the border */
+    padding: 10px 10px;  /* Adds padding */
+    border-radius: 5px;  /* Rounds the corners */
+}
+
+
+
+
+
+
+
+/* .my-class {
+
+}
+
+#my-id {
+
+}
+
+h1 {
+    color: red;
+}
+
+input[name="username"] {
+    color: green
+}
+
+div.my-class {
+    color: blue;
+}
+
+#my-id.my-class {
+    color: yellow
+} */
