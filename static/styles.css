@@ -58,6 +58,25 @@ button:hover, .btn:hover {
     background-color: #45a049;
 }
 
+.btn.btn-success.post {
+    background-color: white; /* Green background */
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 10px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#content {
+    text
+}
+
 /* Back to Users Button */
 .back-to-users {
     background-color: #008CBA; /* Blue background */

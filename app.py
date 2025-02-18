@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, render_template, url_for, abort
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, Users
+from models import db, connect_db, Users, Post
 import logging
 
 app = Flask(__name__)
@@ -45,7 +45,11 @@ def root():
 def list_users():
     users = Users.query.all()
     app.logger.debug(f"Users found: {users}")
+    for user in users:
+        user.posts = Post.query.filter_by(user_id=user.id).all()  # Assuming you have user_id in Post table
     return render_template('user_list.html', users=users)
+
+    
 
 # Route 3: Show the add user form
 @app.route('/users/new')
@@ -103,3 +107,50 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return redirect(url_for('list_users'))
+
+# Route 9: Go to make a new post for user
+@app.route('/users/<int:user_id>/posts/new', methods=["GET", "POST"])
+def add_post(user_id):
+    user = Users.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        new_post = Post(title=title, content=content, user_id=user.id)
+        db.session.add(new_post)
+        db.session.commit()
+
+        return redirect(url_for('user_detail', user_id=user.id))
+
+    return render_template('post_form.html', user=user)
+
+
+# Route 10: Show post details
+@app.route('/posts/<int:post_id>')
+def post_detail(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('post_details.html', post=post)
+
+# Route 11: Delete post
+@app.route('/posts/<int:post_id>/delete', methods=["POST"])
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    user_id = post.user.id
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('user_detail', user_id=user_id))
+
+# Route 12: Edit post
+@app.route('/posts/<int:post_id>/edit', methods=["GET", "POST"])
+def edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    user = Users.query.get_or_404(post.user_id)  # Get the associated user
+    
+    if request.method == 'POST':
+        post.title = request.form['title']
+        post.content = request.form['content']
+        db.session.commit()
+        return redirect(url_for('post_detail', post_id=post.id))
+    
+    return render_template('post_form.html', post=post, user=user)  # Pass the user to the template

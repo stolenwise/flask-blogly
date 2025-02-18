@@ -2,10 +2,18 @@
 
 {% block content %}
   <h1>{{ user.first_name }} {{ user.last_name }}</h1>
-  <img src="{{ user.image_url }}" alt="User Image">
-  <form action="/users/{{ user.id }}/delete" method="POST">
-      <a href="/users/{{ user.id }}/edit">Edit</a>
-      <button type="submit">Delete</button>
-  </form>
-  <a href="{{ url_for('list_users') }}" class="btn btn-primary">Back to Users</a>
+  <img src="{{ user.image_url }}" alt="{{ user.first_name }}" style="width:200px; height:auto;">
+  
+  <h3>Posts</h3>
+  <ul>
+    {% for post in user.posts %}
+      <li><a href="{{ url_for('post_detail', post_id=post.id) }}">{{ post.title }}</a></li>
+    {% endfor %}
+  </ul>
+
+  <a href="{{ url_for('add_post', user_id=user.id) }}" class="btn btn-success post">Add Post</a>
+
+  <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-primary">Edit</a>
+  <a href="{{ url_for('delete_user', user_id=user.id) }}" class="btn btn-danger">Delete</a>
+  <a href="{{ url_for('list_users') }}" class="btn btn-secondary">Back to Users</a>
 {% endblock %}
