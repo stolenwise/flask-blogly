@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, render_template, url_for, abort
-from flask_migrate import Migrate
+# from flask_migrate import Migrate
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, Users, Post
+from models import db, connect_db, Users, Post, Tag
 import logging
 
 app = Flask(__name__)
@@ -156,54 +156,65 @@ def edit_post(post_id):
     
     return render_template('post_form.html', post=post, user=user)  # Pass the user to the template
 
+# TAGS ------------------------
 
 # Route 13: Lists all tags
 @app.route('/tags', methods=["GET"])
 def list_tags():
     tags = Tag.query.all()  # Fetch all tags from the database
-    return render_template('tags.html', tags=tags)
+    return render_template('tags_list.html', tags=tags)
 
 # Route 14: 
-@app.route('/tags/[tag-id]', methods = ["GET"])
-def tags_detail():
-    tags = Tag.query.get_or_404(tag_id)
-    return render_template('tags_details.html', tags=tags)
+@app.route('/tags/<int:tag_id>', methods=["GET"])
+def tags_detail(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    return render_template('tags_details.html', tag=tag)
 
 # 
-# **GET */tags/new :*** Shows a form to add a new tag.
-# Route 15: Show form to add a new tag
-@app.route('/tags/new', methods=["GET"])
-def add_tags():
-    return render_template('tags_form.html')  # Render the form to add a new tag
+# # **GET */tags/new :*** Shows a form to add a new tag.
+# # Route 15: Show form to add a new tag
+# @app.route('/tags/new', methods=["GET"])
+# def add_tags():
+#     return render_template('tags_form.html')  # Render the form to add a new tag
 
-# Route 16: Process add form and add tag
-@app.route('/tags/new', methods=["POST"])
-def create_tag():
-    tag_name = request.form['name']  # Fetch the tag name from the form
-    new_tag = Tag(name=tag_name)  # Create a new tag
-    db.session.add(new_tag)  # Add the tag to the session
-    db.session.commit()  # Commit to the database
-    return redirect(url_for('list_tags'))  # Redirect to the list of tags
+
+# Route 15: Show form to add a new tag
+@app.route('/tags/new', methods=["GET", "POST"])
+def add_tag():  # Ensure this function name matches the endpoint
+    if request.method == "POST":
+        tag_name = request.form["name"]
+        new_tag = Tag(name=tag_name)
+        db.session.add(new_tag)
+        db.session.commit()
+        return redirect(url_for('tags_detail', tag_id=new_tag.id))  # Redirect to the newly created tag's detail page
+
+    return render_template("tags_form.html")  # GET request renders the form
 
 
 # Route 17: Show edit form for a tag
-@app.route('/tags/[tag-id]/edit', methods = ["GET"])
+@app.route('/tags/<int:tag_id>/edit', methods=["GET", "POST"])
 def edit_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
-    return render_template('tags_edit.html', tag=tag)
+    if request.method == "POST":
+        tag.name = request.form["name"]
+        db.session.commit()
+        return redirect(url_for("tags_detail", tag_id=tag.id))  # Redirect to the tag's details after editing
+    return render_template("tags_form.html", tag=tag)
+
+
 
 # Route 18: Process edit form and update the tag
-@app.route('/tags/[tag-id]/edit', methods = ["POST"])
+@app.route('/tags/<int:tag_id>/edit', methods=["POST"])
 def update_tag(tag_id):
-    tag = Tag.query.get_or_404(tag_id)
-    tag.name = request.form['name']
-    db.session.commit() # Commit the change to the database
-    return redirect_url(url_for('list_tags'))
+    tag = Tag.query.get_or_404(tag_id)  # Get the tag by its ID
+    tag.name = request.form['name']  # Update the tag's name
+    db.session.commit()  # Commit the change to the database
+    return redirect(url_for('list_tags'))  # Redirect to the list of tags
 
 # Route 19: Delete a tag
-@app.route('/tags/[tag-id]/delete', methods = ["POST"])
+@app.route('/tags/<int:tag_id>/delete', methods=["POST"])
 def delete_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
-    db.session.delete(tag) # Delete the tag from the session
-    db.session.commit() # Commit to the deletion
-    return redirect_url(url_for('list_tags'))
+    db.session.delete(tag)
+    db.session.commit()
+    return redirect(url_for('list_tags'))  # Redirect to the list of tags after deletion

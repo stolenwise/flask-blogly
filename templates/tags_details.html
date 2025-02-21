@@ -5,7 +5,8 @@
 {% block content %}
 <h2>{{ tag.name }}</h2>
 <p>Details about this tag.</p>
-<a href="{{ url_for('tags_edit', tag_id=tag.id) }}" class="btn btn-primary">Edit</a>
+<a href="{{ url_for('tags_edit', tag_id=tag.id) }}" class="btn btn-warning">Edit</a>
 <a href="{{ url_for('tags_delete', tag_id=tag.id) }}" class="btn btn-danger">Delete</a>
-<a href="{{ url_for('tags_list') }}" class="btn btn-secondary">Back to Tags</a>
+<a href="{{ url_for('add_tag') }}" class="btn btn-secondary">Back to Tags</a>
 {% endblock %}
+
