@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}All Tags{% endblock %}
+
+{% block content %}
+<h2>Tags</h2>
+<ul>
+    {% for tag in tags %}
+        <li>
+            <a href="{{ url_for('tags_detail', tag_id=tag.id) }}">{{ tag.name }}</a>
+            <a href="{{ url_for('tags_edit', tag_id=tag.id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('tags_delete', tag_id=tag.id) }}" class="btn btn-danger">Delete</a>
+        </li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('tags_new') }}" class="btn btn-success">Add New Tag</a>
+{% endblock %}
+

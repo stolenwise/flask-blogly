@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Tag{% endblock %}
+
+{% block content %}
+<h2>Edit Tag</h2>
+<form method="POST" action="{{ url_for('tags_edit', tag_id=tag.id) }}">
+    <div class="form-group">
+        <label for="name">Tag Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ tag.name }}" required>
+    </div>
+    <button type="submit" class="btn btn-success">Update Tag</button>
+</form>
+{% endblock %}
