@@ -160,7 +160,7 @@ def edit_post(post_id):
 
 # Route 13: Lists all tags
 @app.route('/tags', methods=["GET"])
-def list_tags():
+def tags_list():
     tags = Tag.query.all()  # Fetch all tags from the database
     return render_template('tags_list.html', tags=tags)
 
@@ -169,6 +169,7 @@ def list_tags():
 def tags_detail(tag_id):
     tag = Tag.query.get_or_404(tag_id)
     return render_template('tags_details.html', tag=tag)
+
 
 # 
 # # **GET */tags/new :*** Shows a form to add a new tag.
@@ -180,15 +181,16 @@ def tags_detail(tag_id):
 
 # Route 15: Show form to add a new tag
 @app.route('/tags/new', methods=["GET", "POST"])
-def add_tag():  # Ensure this function name matches the endpoint
+def add_tag():
     if request.method == "POST":
         tag_name = request.form["name"]
         new_tag = Tag(name=tag_name)
         db.session.add(new_tag)
         db.session.commit()
-        return redirect(url_for('tags_detail', tag_id=new_tag.id))  # Redirect to the newly created tag's detail page
+        return redirect(url_for('list_tags'))  # Redirect to the tags list page after creating the tag
 
     return render_template("tags_form.html")  # GET request renders the form
+
 
 
 # Route 17: Show edit form for a tag
@@ -196,10 +198,11 @@ def add_tag():  # Ensure this function name matches the endpoint
 def edit_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
     if request.method == "POST":
-        tag.name = request.form["name"]
+        tag.name = request.form['name']
         db.session.commit()
-        return redirect(url_for("tags_detail", tag_id=tag.id))  # Redirect to the tag's details after editing
+        return redirect(url_for('tags_detail', tag_id=tag.id))
     return render_template("tags_form.html", tag=tag)
+
 
 
 
