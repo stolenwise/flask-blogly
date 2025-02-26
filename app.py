@@ -1,7 +1,9 @@
-from flask import Flask, request, redirect, render_template, url_for, abort
+from flask import Flask, request, redirect, render_template, url_for, abort, flash
 # from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, Users, Post, Tag
+from flask_migrate import Migrate  
+from models import db, Users, Post, Tag
 import logging
 
 app = Flask(__name__)
@@ -14,6 +16,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'mysecretkey12345'  # Add your secret key here
 app.config['DEBUG'] = True
 app.config['ENV'] = 'development'
+
+db.init_app(app)
+migrate = Migrate(app, db)
 
 # Enabling logging for Flask
 logging.basicConfig(level=logging.DEBUG)
@@ -28,8 +33,6 @@ logging.basicConfig(level=logging.DEBUG)
 # app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 # toolbar = DebugToolbarExtension(app)
-
-connect_db(app)
 
 # Create tables within application context
 with app.app_context():
@@ -109,22 +112,36 @@ def delete_user(user_id):
     db.session.commit()
     return redirect(url_for('list_users'))
 
-# Route 9: Go to make a new post for user
-@app.route('/users/<int:user_id>/posts/new', methods=["GET", "POST"])
-def add_post(user_id):
-    user = Users.query.get_or_404(user_id)
+@app.route('/posts/new', methods=["GET", "POST"])
+def add_post():
+    user_id = request.args.get('user_id')  # Get user_id from the URL
+    user = Users.query.get(user_id)  # Get the user from the database
+    
+    tags = Tag.query.all()  # Get all tags for the form
 
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        tag_ids = request.form.getlist('tags')  # Get the selected tag IDs as a list
 
+        # Create the new post object
         new_post = Post(title=title, content=content, user_id=user.id)
+        
         db.session.add(new_post)
-        db.session.commit()
+        db.session.commit()  # Commit to generate the post ID
 
-        return redirect(url_for('user_detail', user_id=user.id))
+        # Link the post to the selected tags
+        for tag_id in tag_ids:
+            tag = Tag.query.get(tag_id)  # Get each tag by ID
+            new_post.tags.append(tag)  # Append the tag to the post's tags relationship
+        
+        db.session.commit()  # Commit to save the relationship
 
-    return render_template('post_form.html', user=user)
+        return redirect(url_for('post_detail', post_id=new_post.id))  # Redirect to the post detail page
+
+    # In the GET request, just pass the user and tags. No post object is needed here for a new post.
+    return render_template('post_form.html', user=user, tags=tags)
+
 
 
 # Route 10: Show post details
@@ -143,18 +160,22 @@ def delete_post(post_id):
     return redirect(url_for('user_detail', user_id=user_id))
 
 # Route 12: Edit post
-@app.route('/posts/<int:post_id>/edit', methods=["GET", "POST"])
+@app.route('/posts/<int:post_id>/edit', methods=['GET', 'POST'])
 def edit_post(post_id):
     post = Post.query.get_or_404(post_id)
-    user = Users.query.get_or_404(post.user_id)  # Get the associated user
-    
+    tags = Tag.query.all()  # Get all tags for the dropdown
     if request.method == 'POST':
+        # Assuming you're handling form submission here
         post.title = request.form['title']
         post.content = request.form['content']
+        
+        # Update tags
+        post.tags = Tag.query.filter(Tag.id.in_(request.form.getlist('tags'))).all()
+        
         db.session.commit()
-        return redirect(url_for('post_detail', post_id=post.id))
+        return redirect(url_for('post_detail', post_id=post.id))  # Redirect to the post detail page
     
-    return render_template('post_form.html', post=post, user=user)  # Pass the user to the template
+    return render_template('post_form.html', post=post, tags=tags, user=post.user)
 
 # TAGS ------------------------
 
@@ -164,11 +185,21 @@ def tags_list():
     tags = Tag.query.all()  # Fetch all tags from the database
     return render_template('tags_list.html', tags=tags)
 
-# Route 14: 
+# Route 14: Tags page
 @app.route('/tags/<int:tag_id>', methods=["GET"])
 def tags_detail(tag_id):
-    tag = Tag.query.get_or_404(tag_id)
-    return render_template('tags_details.html', tag=tag)
+    tag = Tag.query.get(tag_id)
+    
+    if not tag:
+        return "Tag not found", 404
+    
+    # Get all posts related to this tag
+    posts = tag.posts.all()  # Ensure you're getting a list of posts
+    
+    return render_template('tags_details.html', tag=tag, posts=posts)
+
+
+
 
 
 # 
@@ -184,12 +215,22 @@ def tags_detail(tag_id):
 def add_tag():
     if request.method == "POST":
         tag_name = request.form["name"]
+
+        # Check if tag already exists
+        existing_tag = Tag.query.filter_by(name=tag_name).first()
+        if existing_tag:
+            # Redirect to tags list or show a message that the tag already exists
+            flash("Tag already exists!")
+            return redirect(url_for('tags_list'))  # Or handle as needed
+
+        # If tag doesn't exist, create a new tag
         new_tag = Tag(name=tag_name)
         db.session.add(new_tag)
         db.session.commit()
-        return redirect(url_for('list_tags'))  # Redirect to the tags list page after creating the tag
+        return redirect(url_for('tags_list'))  # Correct route to redirect after creating the tag
 
     return render_template("tags_form.html")  # GET request renders the form
+
 
 
 
@@ -212,7 +253,7 @@ def update_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)  # Get the tag by its ID
     tag.name = request.form['name']  # Update the tag's name
     db.session.commit()  # Commit the change to the database
-    return redirect(url_for('list_tags'))  # Redirect to the list of tags
+    return redirect(url_for('tags_list'))  # Correct
 
 # Route 19: Delete a tag
 @app.route('/tags/<int:tag_id>/delete', methods=["POST"])
@@ -220,4 +261,5 @@ def delete_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
     db.session.delete(tag)
     db.session.commit()
-    return redirect(url_for('list_tags'))  # Redirect to the list of tags after deletion
+    return redirect(url_for('tags_list'))  # Correct
+

@@ -39,6 +39,14 @@ img {
 }
 
 /* Buttons */
+
+.btn-danger {
+    width: auto; /* This will make the Delete button size shrink to its content */
+    padding: 0.375rem 0.75rem; /* Adjust padding to match the Edit button */
+    font-size: 1rem; /* Ensure text size matches the Edit button */
+    display: inline-block; /* Keep it inline */
+}
+
 button, .btn {
     background-color: #4CAF50; /* Green background */
     border: none;
@@ -91,9 +99,9 @@ form {
     width: 50%;
     margin: 20px auto;
     padding: 20px;
-    background-color: white;
+    /* background-color: white; */
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
 }
 
 form input[type="text"],
